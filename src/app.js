@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 
 const healthRouter = require('./routes/health');
-const usersRouter  = require('./routes/users');
+const projectsRouter = require('./routes/projects');
 const { notFound, errorHandler } = require('./middleware/errors');
 
 const app = express();
@@ -18,12 +18,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors());                            // 加 CORS 头；OPTIONS 预检在这里直接 204 结束
+app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'] }));
 app.use(express.json({ limit: '1mb' }));    // 解析 JSON body -> req.body
 
 // 2) 路由挂载
 app.use('/api/health', healthRouter);
-app.use('/api/users',  usersRouter);
+app.use('/api/projects',  projectsRouter);
 
 // 3) 兜底（必须放在所有路由之后）
 app.use(notFound);       // 404
