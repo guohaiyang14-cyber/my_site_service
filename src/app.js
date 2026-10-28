@@ -7,6 +7,8 @@ const { notFound, errorHandler } = require('./middleware/errors');
 
 const app = express();
 
+app.disable('x-powered-by');  // 禁止返回 X-Powered-By: Express 头，避免泄露信息
+
 // 1) 全局中间件：顺序很重要
 app.use((req, res, next) => {
   const start = Date.now();
