@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma" // 强制输出到 src 下，方便 TS 引用
+}
+
+datasource db {
+  provider = "sqlite"
+  // 注意：Prisma 7 中 url 不能再写在这里了
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  name      String?
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Project {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  title     String
+  summary   String?
+  techStack String // SQLite 中用 String 存 JSON 字符串
+  repoUrl   String?
+  demoUrl   String?
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  authorId Int?
+  author   User? @relation(fields: [authorId], references: [id])
+}
