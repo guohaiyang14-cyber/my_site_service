@@ -1,11 +1,11 @@
-const app = require('./app');
+import app from './app.js';
 
-const PORT = process.env.PORT || 8888;
+const PORT = Number(process.env.PORT ?? 8888);
+
 const server = app.listen(PORT, () => {
   console.log(`API listening on http://localhost:${PORT}`);
 });
 
-// 优雅关闭（可选，Ctrl+C 时等连接结束）
 process.on('SIGINT', () => {
   console.log('\nShutting down...');
   server.close(() => process.exit(0));
