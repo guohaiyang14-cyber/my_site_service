@@ -46,6 +46,23 @@ test('POST /api/projects validates payload', async () => {
   assert.equal(res.status, 201);
 });
 
+test('POST /api/projects rejects numeric-only slug', async () => {
+  const res = await fetch(`${baseUrl}/api/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      slug: '222333',
+      title: 'Invalid Slug',
+      techStack: ['TypeScript'],
+    }),
+  });
+
+  assert.equal(res.status, 400);
+  const data = (await res.json()) as { error?: { details?: string[] } };
+  assert.ok(Array.isArray(data.error?.details));
+  assert.match(String(data.error?.details?.join('\n') ?? ''), /slug/i);
+});
+
 test('GET /api/projects/:slug returns one project', async () => {
   const res = await fetch(`${baseUrl}/api/projects/demo-project`);
   assert.equal(res.status, 200);

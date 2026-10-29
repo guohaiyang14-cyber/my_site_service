@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const slugRegex = /^(?=.*[a-z])[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 // 通用的 URL 校验（允许 null 和空字符串）
 const optionalUrl = z
   .string()
@@ -15,7 +17,10 @@ export const createProjectSchema = z.object({
   slug: z
     .string()
     .trim()
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be kebab-case (e.g. "my-project")'),
+    .regex(
+      slugRegex,
+      'slug must be kebab-case and contain at least one letter (e.g. "my-project")'
+    ),
   title: z.string().trim().min(1, 'title is required'),
   summary: z
     .string()
@@ -34,7 +39,7 @@ export const updateProjectSchema = createProjectSchema.partial().extend({
   slug: z
     .string()
     .trim()
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be kebab-case')
+    .regex(slugRegex, 'slug must be kebab-case and contain at least one letter')
     .optional(),
 });
 
