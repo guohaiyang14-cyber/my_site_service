@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as controller from '../controllers/projectsController.js';
 
-const router = Router();
+const router: ReturnType<typeof Router> = Router();
 
 router.get('/', controller.list);
 router.get('/:slug', controller.getOne);

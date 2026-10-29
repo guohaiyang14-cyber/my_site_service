@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import * as projectsService from '../services/projectsService.js';
 
+const getSlugParam = (req: Request): string => {
+  const slug = req.params.slug;
+  return Array.isArray(slug) ? slug[0] : slug;
+};
+
 /**
  * GET /api/projects
  * 获取项目列表（支持 featured 过滤）
@@ -24,7 +29,8 @@ export const list = async (req: Request, res: Response, next: NextFunction) => {
  */
 export const getOne = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const project = await projectsService.getProjectBySlug(req.params.slug);
+    const slug = getSlugParam(req);
+    const project = await projectsService.getProjectBySlug(slug);
 
     if (!project) {
       return res.status(404).json({
@@ -70,7 +76,8 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
  */
 export const update = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await projectsService.updateProject(req.params.slug, req.body);
+    const slug = getSlugParam(req);
+    const result = await projectsService.updateProject(slug, req.body);
 
     // 1. 找不到对应项目
     if ('notFound' in result) {
@@ -103,7 +110,8 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
  */
 export const remove = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await projectsService.deleteProject(req.params.slug);
+    const slug = getSlugParam(req);
+    const result = await projectsService.deleteProject(slug);
 
     // 找不到对应项目
     if ('notFound' in result) {
