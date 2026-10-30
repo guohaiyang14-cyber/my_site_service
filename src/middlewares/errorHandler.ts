@@ -4,7 +4,7 @@ export const notFound = (req: Request, res: Response): void => {
   res.status(404).json({
     error: {
       code: 'NOT_FOUND',
-      message: `Cannot ${req.method} ${req.originalUrl}`,
+      message: `无法访问 ${req.method} ${req.originalUrl}`,
     },
   });
 };
@@ -19,7 +19,7 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
     res.status(400).json({
       error: {
         code: 'INVALID_JSON',
-        message: 'Request body is not valid JSON',
+        message: '请求体不是有效的 JSON',
       },
     });
     return;
@@ -34,7 +34,7 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
   res.status(status).json({
     error: {
       code: err?.code ?? (status >= 500 ? 'INTERNAL_ERROR' : 'REQUEST_ERROR'),
-      message: status >= 500 ? 'Internal Server Error' : err?.message,
+      message: status >= 500 ? '服务器内部错误' : err?.message,
     },
   });
 };

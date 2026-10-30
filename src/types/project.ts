@@ -8,4 +8,5 @@ export interface Project {
   demoUrl: string | null;
   featured: boolean;
   createdAt: string;
+  authorId: number | null;
 }

@@ -32,7 +32,7 @@ export const getProjectBySlug = async (slug: string): Promise<Project | undefine
   return project ? mapToProject(project) : undefined;
 };
 
-export const createProject = async (payload: unknown) => {
+export const createProject = async (payload: unknown, authorId: number) => {
   // 1. Zod 统一校验
   const result = createProjectSchema.safeParse(payload);
   if (!result.success) {
@@ -44,7 +44,7 @@ export const createProject = async (payload: unknown) => {
 
   // 2. 常规查重
   const existing = await prisma.project.findUnique({ where: { slug: data.slug } });
-  if (existing) return { details: ['slug: already exists'] };
+  if (existing) return { details: ['slug: 已存在'] };
 
   // 3. 写入并捕获并发冲突
   try {
@@ -52,19 +52,20 @@ export const createProject = async (payload: unknown) => {
       data: {
         ...data,
         techStack: JSON.stringify(data.techStack),
+        authorId,
       },
     });
     return { project: mapToProject(newProject) };
   } catch (error) {
     // P2002: 唯一索引冲突（处理并发情况）
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return { details: ['slug: already exists'] };
+      return { details: ['slug: 已存在'] };
     }
     throw error;
   }
 };
 
-export const updateProject = async (slug: string, payload: unknown) => {
+export const updateProject = async (slug: string, payload: unknown, authorId: number) => {
   // 1. Zod 统一校验
   const result = updateProjectSchema.safeParse(payload);
   if (!result.success) {
@@ -78,10 +79,15 @@ export const updateProject = async (slug: string, payload: unknown) => {
   const existing = await getProjectBySlug(slug);
   if (!existing) return { notFound: true };
 
+  // 核心拦截：如果作者 ID 不匹配，直接拒绝（返回 403）
+  if (existing.authorId !== authorId) {
+    return { forbidden: true };
+  }
+
   // 3. 如果修改了 slug，检查新 slug 是否冲突
   if (data.slug && data.slug !== slug) {
     const conflict = await prisma.project.findUnique({ where: { slug: data.slug } });
-    if (conflict) return { details: ['slug: already exists'] };
+    if (conflict) return { details: ['slug: 已存在'] };
   }
 
   // 4. 执行更新并捕获并发冲突
@@ -100,16 +106,18 @@ export const updateProject = async (slug: string, payload: unknown) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') return { notFound: true }; // 记录不存在
-      if (error.code === 'P2002') return { details: ['slug: already exists'] }; // 并发唯一冲突
+      if (error.code === 'P2002') return { details: ['slug: 已存在'] }; // 并发唯一冲突
     }
     throw error;
   }
 };
 
-export const deleteProject = async (slug: string) => {
+export const deleteProject = async (slug: string, authorId: number) => {
   const existing = await getProjectBySlug(slug);
   if (!existing) return { notFound: true };
-
+  if (existing.authorId !== authorId) {
+    return { forbidden: true };
+  }
   try {
     const removed = await prisma.project.delete({
       where: { slug },

@@ -12,6 +12,7 @@ model User {
   id        Int       @id @default(autoincrement())
   email     String    @unique
   name      String?
+  password  String    // 新增：存储哈希后的密码
   createdAt DateTime  @default(now())
   projects  Project[]
 }

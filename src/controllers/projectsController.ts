@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import * as projectsService from '../services/projectsService.js';
 
+export interface AuthRequest extends Request {
+  user?: { userId: number; email: string };
+}
+
 const getSlugParam = (req: Request): string => {
   const slug = req.params.slug;
   return Array.isArray(slug) ? slug[0] : slug;
@@ -34,7 +38,7 @@ export const getOne = async (req: Request, res: Response, next: NextFunction) =>
 
     if (!project) {
       return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Project not found' },
+        error: { code: 'NOT_FOUND', message: '项目不存在' },
       });
     }
 
@@ -48,16 +52,20 @@ export const getOne = async (req: Request, res: Response, next: NextFunction) =>
  * POST /api/projects
  * 创建新项目
  */
-export const create = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await projectsService.createProject(req.body);
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '未登录' } });
+    }
+    const result = await projectsService.createProject(req.body, req.user!.userId);
 
     // 1. Service 返回了业务校验错误
     if ('details' in result) {
       return res.status(400).json({
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Invalid request body',
+          message: '请求体无效',
           details: result.details,
         },
       });
@@ -74,15 +82,19 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
  * PUT /api/projects/:slug
  * 更新项目信息
  */
-export const update = async (req: Request, res: Response, next: NextFunction) => {
+export const update = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const slug = getSlugParam(req);
-    const result = await projectsService.updateProject(slug, req.body);
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '未登录' } });
+    }
+    const result = await projectsService.updateProject(slug, req.body, req.user!.userId);
 
     // 1. 找不到对应项目
     if ('notFound' in result) {
       return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Project not found' },
+        error: { code: 'NOT_FOUND', message: '项目不存在' },
       });
     }
 
@@ -91,10 +103,14 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
       return res.status(400).json({
         error: {
           code: 'VALIDATION_ERROR',
-          message: 'Invalid request body',
+          message: '请求体无效',
           details: result.details,
         },
       });
+    }
+
+    if ('forbidden' in result) {
+      return res.status(403).json({ error: { code: 'FORBIDDEN', message: '无权操作他人的项目' } });
     }
 
     // 3. 更新成功
@@ -108,16 +124,24 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
  * DELETE /api/projects/:slug
  * 删除项目
  */
-export const remove = async (req: Request, res: Response, next: NextFunction) => {
+export const remove = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const slug = getSlugParam(req);
-    const result = await projectsService.deleteProject(slug);
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: '未登录' } });
+    }
+    const result = await projectsService.deleteProject(slug, req.user!.userId);
 
     // 找不到对应项目
     if ('notFound' in result) {
       return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Project not found' },
+        error: { code: 'NOT_FOUND', message: '项目不存在' },
       });
+    }
+
+    if ('forbidden' in result) {
+      return res.status(403).json({ error: { code: 'FORBIDDEN', message: '无权操作他人的项目' } });
     }
 
     // 删除成功（返回被删除的数据，方便前端做缓存剔除）
