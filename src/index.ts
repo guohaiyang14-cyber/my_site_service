@@ -1,6 +1,6 @@
 import app from './app.js';
 
-const PORT = Number(process.env.PORT ?? 8888);
+const PORT = Number(process.env.PORT ?? 7777);
 
 const server = app.listen(PORT, () => {
   console.log(`API listening on http://localhost:${PORT}`);
