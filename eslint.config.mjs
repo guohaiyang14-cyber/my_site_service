@@ -4,6 +4,10 @@ import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
+  // 0. 忽略自动生成的 Prisma 代码
+  {
+    ignores: ['src/generated/**', 'dist/**', 'node_modules/**'],
+  },
   // 1. 基础 JS 推荐规则 (应用于所有 .js 和 .ts)
   eslint.configs.recommended,
 

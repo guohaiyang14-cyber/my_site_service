@@ -1,13 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma.js';
-import z from 'zod';
+import { registerSchema, loginSchema } from '../schemas/auth.schema.js';
 
-// 如果没配置 JWT_SECRET，直接抛错，拒绝启动
-if (!process.env.JWT_SECRET) {
-  throw new Error('致命错误：未在 .env 中配置 JWT_SECRET');
-}
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 export const register = async (data: any) => {
   // 简单粗暴：如果在生产环境，且没有传正确的邀请码，直接拒绝
@@ -15,23 +11,19 @@ export const register = async (data: any) => {
     return { details: ['注册已关闭或邀请码无效'] };
   }
 
-  const email = typeof data.email === 'string' ? data.email.trim().toLowerCase() : '';
-  const password = typeof data.password === 'string' ? data.password : '';
+  const result = registerSchema.safeParse(data);
+  if (!result.success) {
+    return { details: result.error.issues.map((err) => `${err.path.join('.')}: ${err.message}`) };
+  }
+
+  const { email, password } = result.data;
 
   if (!email || !password) {
     return { details: ['邮箱和密码必须输入'] };
   }
 
-  if (!z.string().email().safeParse(email)) {
-    return { details: ['请输入正确的邮箱格式'] };
-  }
-
   if (process.env.NODE_ENV === 'production' && email !== process.env.ADMIN_EMAIL) {
     return { details: ['禁止其他用户注册'] };
-  }
-
-  if (password.length < 6) {
-    return { details: ['密码长度不能少于 6 位'] };
   }
 
   const existing = await prisma.user.findUnique({ where: { email: email } });
@@ -49,8 +41,12 @@ export const register = async (data: any) => {
 };
 
 export const login = async (data: any) => {
-  const email = typeof data.email === 'string' ? data.email.trim().toLowerCase() : '';
-  const password = typeof data.password === 'string' ? data.password : '';
+  const result = loginSchema.safeParse(data);
+  if (!result.success) {
+    return { details: result.error.issues.map((err) => `${err.path.join('.')}: ${err.message}`) };
+  }
+
+  const { email, password } = result.data;
 
   if (!email || !password) {
     return { details: ['请输入邮箱和密码'] };

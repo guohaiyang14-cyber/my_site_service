@@ -27,7 +27,7 @@ export const requireAuth = (req: AuthRequest, res: Response, next: NextFunction)
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: number; email: string };
     req.user = decoded;
     next();
-  } catch (err) {
+  } catch {
     return res.status(401).json({
       error: { code: 'UNAUTHORIZED', message: '令牌已过期或无效' },
     });

@@ -16,12 +16,13 @@ const getSlugParam = (req: Request): string => {
  */
 export const list = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 解析 query 参数
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+    const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string, 10) : undefined;
     const featured =
       req.query.featured === 'true' ? true : req.query.featured === 'false' ? false : undefined;
 
-    const projects = await projectsService.listProjects(featured);
-    res.status(200).json({ data: projects });
+    const result = await projectsService.listProjects({ featured, page, pageSize });
+    res.status(200).json(result);
   } catch (err) {
     next(err); // 未知异常（如 DB 断开），交给全局 errorHandler
   }

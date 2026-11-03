@@ -5,7 +5,7 @@ import type { Project } from '../types/project.js';
 
 // 辅助函数：将数据库返回的对象转为业务期望的类型
 function mapToProject(dbProject: any): Project {
-  let parsedTechStack: string[] = [];
+  let parsedTechStack: string[];
   try {
     parsedTechStack = JSON.parse(dbProject.techStack);
   } catch {
@@ -19,12 +19,31 @@ function mapToProject(dbProject: any): Project {
   };
 }
 
-export const listProjects = async (featured?: boolean): Promise<Project[]> => {
-  const projects = await prisma.project.findMany({
-    where: featured !== undefined ? { featured } : {},
-    orderBy: { createdAt: 'desc' },
-  });
-  return projects.map(mapToProject);
+export const listProjects = async (options: {
+  featured?: boolean;
+  page?: number;
+  pageSize?: number;
+}): Promise<{
+  data: Project[];
+  meta: { total: number; page: number; pageSize: number; totalPages: number };
+}> => {
+  const page = options.page && options.page > 0 ? options.page : 1;
+  const pageSize = options.pageSize && options.pageSize > 0 ? Math.min(options.pageSize, 50) : 10; // 最大限制50条/页
+  const where = options.featured !== undefined ? { featured: options.featured } : {};
+  const [total, projects] = await prisma.$transaction([
+    prisma.project.count({ where }),
+    prisma.project.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+    }),
+  ]);
+
+  return {
+    data: projects.map(mapToProject),
+    meta: { total, page, pageSize, totalPages: Math.ceil(total / pageSize) },
+  };
 };
 
 export const getProjectBySlug = async (slug: string): Promise<Project | undefined> => {
