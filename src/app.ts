@@ -9,6 +9,9 @@ import { requestLogger } from './utils/logger.js';
 
 const app: Express = express();
 
+// 信任 Nginx 传来的 X-Forwarded-For 头（必须加上，否则限流器会报错）
+app.set('trust proxy', 1);
+
 const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
