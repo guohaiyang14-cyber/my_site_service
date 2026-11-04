@@ -12,10 +12,10 @@ const app: Express = express();
 // 信任 Nginx 传来的 X-Forwarded-For 头（必须加上，否则限流器会报错）
 app.set('trust proxy', 1);
 
-const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
-  'http://localhost:5173',
-  'http://localhost:3000',
-];
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:8888')
+  .split(',')
+  .map((origin) => origin.trim()) // <--- 去空格
+  .filter(Boolean);
 
 app.disable('x-powered-by');
 app.use(requestLogger);
@@ -27,10 +27,8 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        // 核心修复：传入 false 而不是 Error。
-        // 这会让请求直接失败，并且不带 CORS 响应头，浏览器端会抛出跨域错误。
-        // 同时，服务端不会报 500，而是正常处理（或返回 403，视你的后续路由而定）。
-        callback(null, false);
+        // 显式抛出错误，交给全局 errorHandler 处理
+        callback(new Error('Not allowed by CORS'));
       }
     },
   })

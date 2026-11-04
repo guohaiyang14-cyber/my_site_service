@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../utils/prisma.js';
 import { registerSchema, loginSchema } from '../schemas/auth.schema.js';
 
-const JWT_SECRET = process.env.JWT_SECRET as string;
+const JWT_SECRET = process.env.JWT_SECRET!;
 
 export const register = async (data: any) => {
   // 简单粗暴：如果在生产环境，且没有传正确的邀请码，直接拒绝
@@ -28,7 +28,7 @@ export const register = async (data: any) => {
 
   const existing = await prisma.user.findUnique({ where: { email: email } });
   if (existing) {
-    return { details: ['邮箱已注册'] };
+    return { details: ['注册失败，请检查你的输入。'] };
   }
 
   const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -52,14 +52,16 @@ export const login = async (data: any) => {
     return { details: ['请输入邮箱和密码'] };
   }
 
+  const genericError = { details: ['邮箱或密码无效'] };
+
   const user = await prisma.user.findUnique({ where: { email: email } });
   if (!user) {
-    return { details: ['邮箱未注册'] };
+    return genericError;
   }
 
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) {
-    return { details: ['密码错误'] };
+    return genericError;
   }
 
   const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });

@@ -9,7 +9,6 @@ export const notFound = (req: Request, res: Response): void => {
   });
 };
 
- 
 export const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction): void => {
   if (res.headersSent) {
     return;
@@ -21,6 +20,14 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
         code: 'INVALID_JSON',
         message: '请求体不是有效的 JSON',
       },
+    });
+    return;
+  }
+
+  // 专门处理 CORS 错误
+  if (err.message === 'Not allowed by CORS') {
+    res.status(403).json({
+      error: { code: 'FORBIDDEN', message: 'CORS policy violation' },
     });
     return;
   }

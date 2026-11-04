@@ -5,6 +5,12 @@ import app from './app.js';
 const requiredEnvs = ['JWT_SECRET', 'DATABASE_URL'];
 const missingEnvs = requiredEnvs.filter((env) => !process.env[env]);
 
+// 前置校验：如果没有配置 JWT_SECRET，直接拒绝启动
+if (!process.env.JWT_SECRET) {
+  console.error('❌ FATAL ERROR: JWT_SECRET is not defined in .env');
+  process.exit(1);
+}
+
 if (missingEnvs.length > 0) {
   console.error(`❌ 启动失败：缺少必要的环境变量: ${missingEnvs.join(', ')}`);
   console.error('请在 .env 文件中配置上述变量后重试。');
