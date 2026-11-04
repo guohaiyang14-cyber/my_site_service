@@ -1,4 +1,4 @@
-# My Site Service
+# 🚀 Personal Portfolio & Lightweight API
 
 <p align="center">
   <a href="https://guohy.online" target="_blank">
@@ -13,142 +13,58 @@
 [![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![JWT](https://img.shields.io/badge/Auth-JWT-EB5424?logo=jwt&logoColor=white)](https://jwt.io/)
+[![Vue](https://img.shields.io/badge/Vue-3.x-42B883?logo=vuedotjs&logoColor=white)](https://vuejs.org/)
 
 </div>
 
-一个基于 Node.js + Express + Prisma 的轻量级个人站点后端服务，适用于作品集展示、项目管理、用户登录与鉴权场景。
+一个基于 **Vue 3 + Node.js + Prisma** 构建的全栈个人作品集系统。包含无状态的 RESTful API 后端，以及响应式前端界面。具备完整的用户认证、作品 CRUD、防越权控制、AI 摘要生成及生产级防御能力。
 
-- 访问地址：<https://guohy.online>
-- 文档入口：[API 接口文档](docs/API.md)
-- 部署说明：[部署文档](docs/DEPLOYMENT.md)
+🌐 **在线演示**: [https://guohy.online](https://guohy.online) _(账号密码请咨询作者或自行注册)_
 
-## ✨ 功能概览
+## 📸 界面预览
 
-- 用户注册与登录
-- JWT 令牌鉴权
-- 项目列表、详情、创建、更新、删除
-- Zod 参数校验与统一错误处理
-- Express Rate Limit 接口限流
-- Prisma 数据库迁移管理
-- SQLite 作为本地开发 / 轻量部署数据库
+![alt text](image.png)
+
+## ✨ 核心特性
+
+- **🔐 安全闭环**：基于 JWT 的无状态鉴权 + Bcrypt 密码哈希，配合 Express Rate Limit 实现防暴力破解与防恶意注册。
+- **🛡️ 越权拦截**：利用 Prisma 关系模型实现数据隔离，用户仅能修改/删除自己创建的记录（IDOR 防护）。
+- **🤖 AI 辅助生成**：集成大模型 API，支持根据标题和技术栈一键生成项目摘要（含超时降级与错误处理）。
+- **📦 生产级防御**：全局统一的 `{ error: { code, message } }` 错误模型，全链路 Zod 数据校验。
+- **🚀 自动化部署**：提供完整的 PM2 + Nginx 生产部署方案与 SQLite 定时备份脚本。
 
 ## 🧱 技术栈
 
-- Node.js 20+
-- TypeScript
-- Express 5
-- Prisma ORM
-- SQLite
-- Zod
-- JWT + bcryptjs
-- CORS + Rate Limiting
+**后端**: Node.js 20+, TypeScript, Express 5, Prisma ORM, SQLite, Zod, JWT, bcryptjs, OpenAI SDK
+**前端**: Vue 3, Vite, Vue Router, 原生 Fetch 封装 (含拦截器)
+**部署**: Ubuntu, Nginx, PM2, Certbot (HTTPS)
 
-## 🏗️ 项目结构
+## 🏗️ 工程化亮点 (Engineering Highlights)
+
+- **经典分层架构**：`Router -> Controller -> Service -> Prisma`，业务逻辑与 HTTP 协议解耦，便于后期迁移至微服务或切换数据库。
+- **严格的测试门禁**：使用 `node:test` 编写集成测试，覆盖主流程与鉴权边界（8 个测试用例，100% 通过），配置独立的 `test.db` 实现测试环境隔离。
+- **环境隔离**：利用 `.env` 区分开发（`dev.db`）与生产（`prod.db`），敏感配置零硬编码。
+- **优雅的降级处理**：AI 服务异常、外部接口超时均不会影响核心 CRUD 链路，前端具备完善的 Toast 与 Loading 兜底状态。
+
+## 📁 项目结构
 
 ```text
 my_site_service/
 ├─ docs/
-│  ├─ API.md
-│  └─ DEPLOYMENT.md
+│  ├─ API.md              # 详细接口文档
+│  └─ DEPLOYMENT.md       # 生产部署指南 (Nginx/PM2/SSL)
 ├─ prisma/
-│  ├─ schema.prisma
-│  └─ migrations/
+│  ├─ schema.prisma       # 数据模型定义
+│  └─ migrations/         # 数据库迁移历史
 ├─ src/
-│  ├─ app.ts
-│  ├─ controllers/
-│  ├─ middlewares/
-│  ├─ routes/
-│  ├─ schemas/
-│  ├─ services/
-│  ├─ types/
-│  └─ utils/
-├─ tests/
-├─ .env.example
-├─ eslint.config.mjs
-├─ package.json
-├─ prisma.config.ts
-├─ README.md
-├─ tsconfig.json
-└─ pnpm-lock.yaml
+│  ├─ app.ts              # Express 实例装配
+│  ├─ index.ts            # 启动入口 & 环境校验
+│  ├─ controllers/        # 控制层 (处理 HTTP 请求/响应)
+│  ├─ services/           # 业务逻辑层 (校验/鉴权/AI)
+│  ├─ schemas/            # Zod 校验规则
+│  ├─ routes/             # 路由挂载与限流
+│  ├─ middlewares/        # 鉴权与全局错误捕获
+│  └─ utils/              # Prisma 单例与脱敏日志
+├─ tests/                 # 集成测试用例
+└─ package.json
 ```
-
-## 🚀 快速开始
-
-### 1. 安装依赖
-
-```bash
-pnpm install
-```
-
-### 2. 配置环境变量
-
-```bash
-cp .env.example .env
-```
-
-示例内容：
-
-```env
-DATABASE_URL="file:./prisma/dev.db"
-JWT_SECRET="your-super-secret-key"
-NODE_ENV="development"
-PORT=3000
-CORS_ORIGINS="http://localhost:5173,http://localhost:3000"
-```
-
-### 3. 初始化数据库
-
-```bash
-pnpm exec prisma migrate dev
-```
-
-### 4. 启动开发服务器
-
-```bash
-pnpm dev
-```
-
-服务默认启动在：
-
-```text
-http://localhost:3000
-```
-
-## 🧪 常用命令
-
-```bash
-pnpm run build
-pnpm run start
-pnpm run lint
-pnpm run test
-```
-
-## 📡 API 概览
-
-| 模块     | 方法   | 路径                | 说明           |
-| -------- | ------ | ------------------- | -------------- |
-| 健康检查 | GET    | /api/health         | 服务状态检查   |
-| 注册     | POST   | /api/auth/register  | 创建账号       |
-| 登录     | POST   | /api/auth/login     | 获取 JWT       |
-| 项目列表 | GET    | /api/projects       | 分页、筛选     |
-| 项目详情 | GET    | /api/projects/:slug | 根据 slug 查询 |
-| 创建项目 | POST   | /api/projects       | 需要鉴权       |
-| 更新项目 | PUT    | /api/projects/:slug | 需要鉴权       |
-| 删除项目 | DELETE | /api/projects/:slug | 需要鉴权       |
-
-## 🔐 鉴权方式
-
-登录成功后，返回的 JWT 需要放到请求头中：
-
-```http
-Authorization: Bearer <token>
-```
-
-## 📚 文档导航
-
-- [API 接口文档](docs/API.md)
-- [部署文档](docs/DEPLOYMENT.md)
-
-## 📝 说明
-
-该项目以“清晰分层与良好扩展性”为核心，后端使用经典的 Router -> Controller -> Service -> Prisma 的结构，便于后续为前端、CMS 或管理后台扩展更多能力。
